@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Ethernet Quality Dashboard</title>
+  <script src="/static/chart.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 40px; }
+    canvas { margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <h2>Monitoramento de Qualidade da Ethernet</h2>
+
+  <label>Período:</label>
+  <select id="period" onchange="update()">
+    <option value="1">Última hora</option>
+    <option value="6">Últimas 6h</option>
+    <option value="24">Últimas 24h</option>
+    <option value="168">Últimos 7 dias</option>
+  </select>
+
+  <button onclick="exportCsv()">📥 Exportar CSV</button>
+  <p id="status"></p>
+
+  <canvas id="pingChart" width="800" height="250"></canvas>
+  <canvas id="speedChart" width="800" height="250"></canvas>
+
+  <script>
+    async function update() {
+      const hours = document.getElementById("period").value;
+      const res = await fetch(`/data?hours=${hours}`);
+      const data = await res.json();
+
+      document.getElementById("status").innerText =
+        `Medições: ${data.timestamps.length} | Última: ${data.timestamps[data.timestamps.length - 1] || '-'} | Link: ${data.link.slice(-1)[0] || '-'}`;
+
+      pingChart.data.labels = data.timestamps;
+      pingChart.data.datasets[0].data = data.ping;
+      pingChart.update();
+
+      speedChart.data.labels = data.timestamps;
+      speedChart.data.datasets[0].data = data.download;
+      speedChart.data.datasets[1].data = data.upload;
+      speedChart.update();
+    }
+
+    function exportCsv() {
+      const hours = document.getElementById("period").value;
+      window.location.href = `/export?hours=${hours}`;
+    }
+
+    // Gráfico de PING
+    const ctx1 = document.getElementById('pingChart').getContext('2d');
+    const pingChart = new Chart(ctx1, {
+      type: 'line',
+      data: {
+        labels: [],
+        datasets: [{
+          label: 'Ping médio (ms)',
+          data: [],
+          fill: false,
+          borderColor: 'blue',
+          tension: 0.1
+        }]
+      },
+      options: { scales: { y: { beginAtZero: true } } }
+    });
+
+    // Gráfico de velocidade
+    const ctx2 = document.getElementById('speedChart').getContext('2d');
+    const speedChart = new Chart(ctx2, {
+      type: 'line',
+      data: {
+        labels: [],
+        datasets: [
+          { label: 'Download (Mbps)', data: [], borderColor: 'green', fill: false, tension: 0.1 },
+          { label: 'Upload (Mbps)', data: [], borderColor: 'orange', fill: false, tension: 0.1 }
+        ]
+      },
+      options: { scales: { y: { beginAtZero: true } } }
+    });
+
+    update();
+  </script>
+</body>
+</html>

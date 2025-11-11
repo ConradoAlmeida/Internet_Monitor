@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Monitor de Qualidade da Internet</title>
+    <link rel="icon" href="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f4f6.svg" type="image/svg+xml">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --text-light: #e2e8f0;
+            --accent-blue: #38bdf8;
+            --accent-red: #f87171;
+            --accent-green: #4ade80;
+        }
+
+        body {
+            font-family: "Segoe UI", Arial, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-light);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        header img {
+            width: 32px;
+            height: 32px;
+        }
+
+        h1 {
+            font-size: 1.6em;
+            margin: 0;
+        }
+
+        .buttons {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            background: var(--bg-card);
+            color: var(--text-light);
+            border: 1px solid #334155;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        button.active, button:hover {
+            background: var(--accent-blue);
+            color: #000;
+        }
+
+        .chart-container {
+            width: 90%;
+            max-width: 1000px;
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 10px 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+            margin-bottom: 20px;
+        }
+
+        canvas {
+            width: 100% !important;
+            height: 400px !important;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <img src="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f4f6.svg" alt="Ícone Internet">
+        <h1>Monitor de Qualidade da Internet</h1>
+    </header>
+
+    <div class="buttons">
+        <button onclick="setRange('1h')" id="btn-1h" class="active">Última 1h</button>
+        <button onclick="setRange('4h')" id="btn-4h">Últimas 4h</button>
+        <button onclick="setRange('12h')" id="btn-12h">Últimas 12h</button>
+        <button onclick="setRange('1d')" id="btn-1d">Último dia</button>
+        <button onclick="setRange('7d')" id="btn-7d">Últimos 7 dias</button>
+        <button onclick="setRange('total')" id="btn-total">Total</button>
+    </div>
+
+    <div class="chart-container">
+        <canvas id="chartSpeed"></canvas>
+    </div>
+    <div class="chart-container">
+        <canvas id="chartPing"></canvas>
+    </div>
+
+    <script>
+        let currentRange = "1h";
+
+        const chartOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: { ticks: { color: '#cbd5e1' }, grid: { color: '#334155' } },
+                y: { beginAtZero: true, ticks: { color: '#cbd5e1' }, grid: { color: '#334155' } }
+            },
+            plugins: { legend: { labels: { color: '#e2e8f0' } } }
+        };
+
+        const chartSpeed = new Chart(document.getElementById("chartSpeed"), {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [
+                    { label: 'Download (Mbps)', data: [], borderColor: '#38bdf8', backgroundColor: 'rgba(56,189,248,0.2)', tension: 0.3, fill: true },
+                    { label: 'Upload (Mbps)', data: [], borderColor: '#4ade80', backgroundColor: 'rgba(74,222,128,0.2)', tension: 0.3, fill: true }
+                ]
+            },
+            options: chartOptions
+        });
+
+        const chartPing = new Chart(document.getElementById("chartPing"), {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [
+                    { label: 'Ping (ms)', data: [], borderColor: '#f87171', backgroundColor: 'rgba(248,113,113,0.2)', tension: 0.3, fill: true }
+                ]
+            },
+            options: chartOptions
+        });
+
+        async function updateCharts() {
+            const res = await fetch(`/data?range=${currentRange}`);
+            const data = await res.json();
+
+            chartSpeed.data.labels = data.timestamps;
+            chartSpeed.data.datasets[0].data = data.download;
+            chartSpeed.data.datasets[1].data = data.upload;
+            chartSpeed.update();
+
+            chartPing.data.labels = data.timestamps;
+            chartPing.data.datasets[0].data = data.ping;
+            chartPing.update();
+        }
+
+        function setRange(range) {
+            currentRange = range;
+            document.querySelectorAll("button").forEach(btn => btn.classList.remove("active"));
+            document.getElementById(`btn-${range}`).classList.add("active");
+            updateCharts();
+        }
+
+        setInterval(updateCharts, 10000);
+        updateCharts();
+    </script>
+</body>
+</html>
