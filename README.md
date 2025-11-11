@@ -2,7 +2,9 @@
 Application to monitor internet through a raspberry pi running Raspberry OS
 
 ## Instruction
-Clone this repository
+Clone este repositorio
+
+Instale os Requirements.txt
 
 ##  Configuração do Serviço `internet_monitor` no Raspberry Pi
 
