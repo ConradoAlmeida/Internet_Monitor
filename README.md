@@ -6,6 +6,16 @@ Clone este repositorio
 
 Instale os Requirements.txt
 
+### Instalação do Speedtest CLI (Ookla)
+
+Para que o monitor funcione, é necessário instalar o Speedtest CLI oficial da Ookla:
+
+```bash
+sudo apt-get install curl
+curl -s https://packagecloud.io/install/repositories/ookla/speedtest-cli/script.deb.sh | sudo bash
+sudo apt-get install speedtest
+```
+
 ##  Configuração do Serviço `internet_monitor` no Raspberry Pi
 
 Guia completo para criar, configurar e iniciar automaticamente o **Monitor de Qualidade da Internet** usando o `systemd` no Raspberry Pi.

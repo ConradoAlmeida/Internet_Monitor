@@ -25,16 +25,26 @@ def init_db():
             download_mbps REAL,
             upload_mbps REAL,
             jitter REAL,
-            packet_loss REAL
+            packet_loss REAL,
+            provider TEXT
         )
     """)
+    
+    # Migração: adicionar coluna provider se não existir
+    try:
+        cursor.execute("SELECT provider FROM metrics LIMIT 1")
+    except sqlite3.OperationalError:
+        print("[INFO] Adicionando coluna 'provider' à tabela existente...")
+        cursor.execute("ALTER TABLE metrics ADD COLUMN provider TEXT")
+        print("[INFO] Coluna 'provider' adicionada com sucesso!")
+    
     conn.commit()
     conn.close()
     print("[INFO] Banco de dados inicializado:", DB_FILE)
 
 # === Executa o speedtest oficial ===
 def executar_speedtest():
-    """Executa o speedtest oficial da Ookla e retorna ping, download, upload, jitter e packet loss."""
+    """Executa o speedtest oficial da Ookla e retorna ping, download, upload, jitter, packet loss e provider."""
     try:
         result = subprocess.run(
             ["speedtest", "--accept-license", "--accept-gdpr", "-f", "json"],
@@ -43,7 +53,7 @@ def executar_speedtest():
 
         if result.returncode != 0:
             print(f"[ERRO] Speedtest falhou: {result.stderr.strip()}")
-            return None, None, None, None, None
+            return None, None, None, None, None, None
 
         data = json.loads(result.stdout)
 
@@ -52,8 +62,9 @@ def executar_speedtest():
         download = data["download"]["bandwidth"] * 8 / 1e6  # bits/s → Mbps
         upload = data["upload"]["bandwidth"] * 8 / 1e6
         packet_loss = data.get("packetLoss", 0)
+        provider = data.get("isp", "Unknown")
 
-        return ping, download, upload, jitter, packet_loss
+        return ping, download, upload, jitter, packet_loss, provider
 
     except FileNotFoundError:
         print("[ERRO] O executável 'speedtest' não foi encontrado.")
@@ -66,25 +77,25 @@ def executar_speedtest():
     except Exception as e:
         print(f"[ERRO EXECUTAR_SPEEDTEST] {e}")
 
-    return None, None, None, None, None
+    return None, None, None, None, None, None
 
 # === Coletor de dados (usando Ookla) ===
 def collect_metrics():
     while True:
         try:
             print("[INFO] Executando speedtest oficial...")
-            ping, download, upload, jitter, packet_loss = executar_speedtest()
+            ping, download, upload, jitter, packet_loss, provider = executar_speedtest()
 
             if ping is not None and download is not None and upload is not None:
                 conn = sqlite3.connect(DB_FILE)
                 cursor = conn.cursor()
                 cursor.execute(
-                    "INSERT INTO metrics (timestamp, ping_avg, download_mbps, upload_mbps, jitter, packet_loss) VALUES (?, ?, ?, ?, ?, ?)",
-                    (datetime.now().strftime("%Y-%m-%d %H:%M:%S"), ping, download, upload, jitter, packet_loss)
+                    "INSERT INTO metrics (timestamp, ping_avg, download_mbps, upload_mbps, jitter, packet_loss, provider) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                    (datetime.now().strftime("%Y-%m-%d %H:%M:%S"), ping, download, upload, jitter, packet_loss, provider)
                 )
                 conn.commit()
                 conn.close()
-                print(f"[OK] Registro salvo: ping={ping:.2f} ms | jitter={jitter:.2f} ms | ↓ {download:.2f} Mbps | ↑ {upload:.2f} Mbps | perda={packet_loss:.2f}%")
+                print(f"[OK] Registro salvo: provider={provider} | ping={ping:.2f} ms | jitter={jitter:.2f} ms | ↓ {download:.2f} Mbps | ↑ {upload:.2f} Mbps | perda={packet_loss:.2f}%")
             else:
                 print("[WARN] Speedtest retornou dados incompletos.")
 
@@ -98,10 +109,21 @@ def collect_metrics():
 def index():
     return render_template("index.html")
 
+# === API de provedores disponíveis ===
+@app.route("/providers")
+def providers():
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    cursor.execute("SELECT DISTINCT provider FROM metrics WHERE provider IS NOT NULL ORDER BY provider")
+    providers_list = [row[0] for row in cursor.fetchall()]
+    conn.close()
+    return jsonify(providers_list)
+
 # === API de dados para o dashboard ===
 @app.route("/data")
 def data():
     time_range = request.args.get("range", "1h")
+    provider_filter = request.args.get("provider", "all")
     now = datetime.now()
 
     ranges = {
@@ -115,11 +137,20 @@ def data():
     start_time = ranges.get(time_range, ranges["1h"])
 
     conn = sqlite3.connect(DB_FILE)
-    df = pd.read_sql_query(
-        "SELECT * FROM metrics WHERE timestamp >= ? ORDER BY timestamp ASC",
-        conn,
-        params=(start_time.strftime("%Y-%m-%d %H:%M:%S"),)
-    )
+    
+    if provider_filter == "all":
+        df = pd.read_sql_query(
+            "SELECT * FROM metrics WHERE timestamp >= ? ORDER BY timestamp ASC",
+            conn,
+            params=(start_time.strftime("%Y-%m-%d %H:%M:%S"),)
+        )
+    else:
+        df = pd.read_sql_query(
+            "SELECT * FROM metrics WHERE timestamp >= ? AND provider = ? ORDER BY timestamp ASC",
+            conn,
+            params=(start_time.strftime("%Y-%m-%d %H:%M:%S"), provider_filter)
+        )
+    
     conn.close()
 
     if df.empty:
