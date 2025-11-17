@@ -325,16 +325,7 @@
     <script>
         let currentRange = "1h";
         let currentProvider = "all";
-
-        const chartOptions = {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                x: { ticks: { color: '#cbd5e1' }, grid: { color: '#334155' } },
-                y: { beginAtZero: true, ticks: { color: '#cbd5e1' }, grid: { color: '#334155' } }
-            },
-            plugins: { legend: { labels: { color: '#e2e8f0' } } }
-        };
+        let providersData = [];
 
         const chartSpeed = new Chart(document.getElementById("chartSpeed"), {
             type: 'line',
@@ -345,7 +336,25 @@
                     { label: 'Upload (Mbps)', data: [], borderColor: '#4ade80', backgroundColor: 'rgba(74,222,128,0.2)', tension: 0.3, fill: true }
                 ]
             },
-            options: chartOptions
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { ticks: { color: '#cbd5e1' }, grid: { color: '#334155' } },
+                    y: { beginAtZero: true, ticks: { color: '#cbd5e1' }, grid: { color: '#334155' } }
+                },
+                plugins: {
+                    legend: { labels: { color: '#e2e8f0' } },
+                    tooltip: {
+                        callbacks: {
+                            afterLabel: function(context) {
+                                const provider = providersData[context.dataIndex];
+                                return provider ? 'Provedor: ' + provider : '';
+                            }
+                        }
+                    }
+                }
+            }
         });
 
         const chartPing = new Chart(document.getElementById("chartPing"), {
@@ -356,7 +365,25 @@
                     { label: 'Ping (ms)', data: [], borderColor: '#f87171', backgroundColor: 'rgba(248,113,113,0.2)', tension: 0.3, fill: true }
                 ]
             },
-            options: chartOptions
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { ticks: { color: '#cbd5e1' }, grid: { color: '#334155' } },
+                    y: { beginAtZero: true, ticks: { color: '#cbd5e1' }, grid: { color: '#334155' } }
+                },
+                plugins: {
+                    legend: { labels: { color: '#e2e8f0' } },
+                    tooltip: {
+                        callbacks: {
+                            afterLabel: function(context) {
+                                const provider = providersData[context.dataIndex];
+                                return provider ? 'Provedor: ' + provider : '';
+                            }
+                        }
+                    }
+                }
+            }
         });
 
         const chartJitter = new Chart(document.getElementById("chartJitter"), {
@@ -367,7 +394,25 @@
                     { label: 'Jitter (ms)', data: [], borderColor: '#fbbf24', backgroundColor: 'rgba(251,191,36,0.2)', tension: 0.3, fill: true }
                 ]
             },
-            options: chartOptions
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { ticks: { color: '#cbd5e1' }, grid: { color: '#334155' } },
+                    y: { beginAtZero: true, ticks: { color: '#cbd5e1' }, grid: { color: '#334155' } }
+                },
+                plugins: {
+                    legend: { labels: { color: '#e2e8f0' } },
+                    tooltip: {
+                        callbacks: {
+                            afterLabel: function(context) {
+                                const provider = providersData[context.dataIndex];
+                                return provider ? 'Provedor: ' + provider : '';
+                            }
+                        }
+                    }
+                }
+            }
         });
 
         const chartPacketLoss = new Chart(document.getElementById("chartPacketLoss"), {
@@ -378,7 +423,25 @@
                     { label: 'Perda de Pacotes (%)', data: [], borderColor: '#f472b6', backgroundColor: 'rgba(244,114,182,0.2)', tension: 0.3, fill: true }
                 ]
             },
-            options: chartOptions
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { ticks: { color: '#cbd5e1' }, grid: { color: '#334155' } },
+                    y: { beginAtZero: true, ticks: { color: '#cbd5e1' }, grid: { color: '#334155' } }
+                },
+                plugins: {
+                    legend: { labels: { color: '#e2e8f0' } },
+                    tooltip: {
+                        callbacks: {
+                            afterLabel: function(context) {
+                                const provider = providersData[context.dataIndex];
+                                return provider ? 'Provedor: ' + provider : '';
+                            }
+                        }
+                    }
+                }
+            }
         });
 
         function updateStats(stats) {
@@ -401,6 +464,8 @@
         async function updateCharts() {
             const res = await fetch(`/data?range=${currentRange}&provider=${currentProvider}`);
             const data = await res.json();
+
+            providersData = data.providers || [];
 
             chartSpeed.data.labels = data.timestamps;
             chartSpeed.data.datasets[0].data = data.download;

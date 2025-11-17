@@ -161,6 +161,7 @@ def data():
             "upload": [],
             "jitter": [],
             "packet_loss": [],
+            "providers": [],
             "stats": {
                 "download": {"min": 0, "max": 0},
                 "upload": {"min": 0, "max": 0},
@@ -201,6 +202,7 @@ def data():
         "upload": df["upload_mbps"].tolist(),
         "jitter": df["jitter"].tolist() if "jitter" in df.columns else [],
         "packet_loss": df["packet_loss"].tolist() if "packet_loss" in df.columns else [],
+        "providers": df["provider"].tolist() if "provider" in df.columns else [],
         "stats": stats
     })
 
