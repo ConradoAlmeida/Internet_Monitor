@@ -307,13 +307,6 @@ sudo raspi-config
 pip3 install -r requirements_oled.txt
 
 # Iniciar display
-./start_oled.sh
-
-# Ver logs
-tail -f oled.log
-
-# Parar display
-./stop_oled.sh
 ```
 
 ### Conexões
