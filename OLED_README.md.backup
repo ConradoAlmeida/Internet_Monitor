@@ -1,0 +1,118 @@
+# Display OLED para Monitor de Internet
+
+Interface simplificada para display OLED 0.96" (128x64 pixels, SSD1306) mostrando médias das últimas 4 horas.
+
+## Hardware Necessário
+
+- Display OLED 0.96" I2C (SSD1306)
+- 1 botão push-button (para pausa)
+- Jumpers para conexão
+
+## Conexões GPIO
+
+### Display OLED (I2C)
+- VCC → 3.3V
+- GND → GND
+- SCL → GPIO3 (SCL - Pino 5)
+- SDA → GPIO2 (SDA - Pino 3)
+
+### Botão
+- **PAUSE** (Pausar/Retomar): GPIO23 (Pino 16) + GND
+
+## Instalação
+
+```bash
+# Instalar dependências
+pip3 install -r requirements_oled.txt
+
+# Habilitar I2C no Raspberry Pi
+sudo raspi-config
+# Interface Options → I2C → Enable
+
+# Verificar se o display foi detectado
+sudo i2cdetect -y 1
+# Deve mostrar um dispositivo no endereço 0x3C ou 0x3D
+```
+
+## Uso
+
+```bash
+# Iniciar display OLED
+./start_oled.sh
+
+# Parar display OLED
+./stop_oled.sh
+
+# Ver logs
+tail -f oled.log
+```
+
+## Funcionalidades
+
+### Tela Principal (única)
+Mostra médias das últimas 4 horas:
+- **IP do servidor** (topo)
+- **D (Download)**: Velocidade média em Mbps
+- **U (Upload)**: Velocidade média em Mbps
+- **L (Latência/Ping)**: Tempo médio em ms
+- **J (Jitter)**: Variação média em ms
+- **Rodapé**: Quantidade de testes ou status "PAUSADO"
+
+Layout do display:
+```
+┌─────────────────────────┐
+│ IP: 192.168.0.206       │
+├─────────────────────────┤
+│ D:  198.5       Mbps    │
+│                         │
+│ U:  196.2       Mbps    │
+│                         │
+│ L:  6.5 ms    J: 0.0 ms │
+│                         │
+├─────────────────────────┤
+│ Med.4h (42 tests)       │
+└─────────────────────────┘
+```
+
+### Botão PAUSE
+Pressione a qualquer momento para pausar/retomar o monitoramento.
+- Quando pausado: Display mostra "PAUSADO" no rodapé
+- Quando ativo: Mostra quantidade de testes usados na média
+
+## Debounce
+Tempo de debounce: 300ms (evita leituras duplicadas do botão)
+
+## Troubleshooting
+
+### Display não aparece nada
+```bash
+# Verificar I2C
+sudo i2cdetect -y 1
+
+# Verificar permissões
+sudo usermod -aG i2c $USER
+# Fazer logout/login
+```
+
+### Erro de importação
+```bash
+# Reinstalar dependências
+pip3 install --upgrade -r requirements_oled.txt
+```
+
+### Botão não responde
+- Verificar se GPIO23 (pino físico 16) está conectado corretamente
+- Verificar se o botão conecta ao GND quando pressionado
+- Aumentar tempo de debounce no código se necessário
+
+## Customização
+
+Para alterar o pino GPIO do botão, edite a constante no `oled_display.py`:
+```python
+BUTTON_PAUSE = 23  # Trocar para outro GPIO se necessário
+```
+
+Para alterar o endereço I2C (se seu display usar 0x3D):
+```python
+self.display = SSD1306_I2C(DISPLAY_WIDTH, DISPLAY_HEIGHT, i2c, addr=0x3D)
+```

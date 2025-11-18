@@ -215,6 +215,16 @@
         <h1>Monitor de Qualidade da Internet</h1>
     </header>
 
+    <div id="monitor-status" style="width: 90%; max-width: 1400px; background: var(--bg-card); border-radius: 8px; padding: 12px 20px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <span id="status-indicator" style="width: 12px; height: 12px; border-radius: 50%; background: #4ade80; box-shadow: 0 0 8px #4ade80;"></span>
+            <span id="status-text" style="color: var(--text-light); font-weight: 500;">Monitorando...</span>
+        </div>
+        <div style="color: #94a3b8; font-size: 0.9em;">
+            <span id="status-detail">Carregando...</span>
+        </div>
+    </div>
+
     <div class="filter-section">
         <label for="provider-filter">🏛️ Provedor:</label>
         <select id="provider-filter" onchange="setProvider()">
@@ -229,6 +239,74 @@
         <button onclick="setRange('1d')" id="btn-1d">Último dia</button>
         <button onclick="setRange('7d')" id="btn-7d">Últimos 7 dias</button>
         <button onclick="setRange('total')" id="btn-total">Total</button>
+        <button onclick="toggleConfigPanel()" id="btn-config" style="background: #334155;">⚙️ Configurações</button>
+    </div>
+
+    <!-- Painel de Configuração -->
+    <div id="config-panel" style="display: none; width: 90%; max-width: 800px; background: var(--bg-card); border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.4);">
+        <h2 style="color: var(--accent-blue); margin-top: 0; border-bottom: 2px solid #334155; padding-bottom: 10px;">⚙️ Configurações do Monitor</h2>
+        
+        <div style="background: #0f172a; padding: 12px; border-radius: 6px; margin-bottom: 20px; border-left: 4px solid var(--accent-green);">
+            <div style="color: #94a3b8; font-size: 0.9em;">
+                💡 <strong>As configurações são aplicadas imediatamente</strong> após salvar. O monitor recalcula automaticamente o próximo teste.
+            </div>
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <h3 style="color: var(--accent-green); font-size: 1.1em;">📅 Agenda de Monitoramento</h3>
+            <div style="display: flex; gap: 20px; align-items: center; margin-top: 10px;">
+                <div style="flex: 1;">
+                    <label style="display: block; margin-bottom: 5px; color: #94a3b8;">Hora Início:</label>
+                    <input type="number" id="start-hour" min="0" max="23" style="width: 100%; padding: 8px; background: #0f172a; color: var(--text-light); border: 1px solid #334155; border-radius: 6px;">
+                </div>
+                <div style="flex: 1;">
+                    <label style="display: block; margin-bottom: 5px; color: #94a3b8;">Hora Fim:</label>
+                    <input type="number" id="end-hour" min="0" max="23" style="width: 100%; padding: 8px; background: #0f172a; color: var(--text-light); border: 1px solid #334155; border-radius: 6px;">
+                </div>
+            </div>
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <h3 style="color: var(--accent-green); font-size: 1.1em;">⏱️ Intervalo de Amostragem</h3>
+            <div style="margin-top: 10px;">
+                <label style="display: block; margin-bottom: 5px; color: #94a3b8;">Intervalo (segundos):</label>
+                <input type="number" id="interval" min="60" step="60" style="width: 100%; padding: 8px; background: #0f172a; color: var(--text-light); border: 1px solid #334155; border-radius: 6px;">
+                <small style="color: #64748b; display: block; margin-top: 5px;">Mínimo: 60 segundos (1 minuto). Valores comuns: 300 (5 min), 600 (10 min), 1800 (30 min), 3600 (1 hora)</small>
+            </div>
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <h3 style="color: var(--accent-green); font-size: 1.1em;">🚀 Flags do Speedtest</h3>
+            <div style="margin-top: 10px;">
+                <label style="display: block; margin-bottom: 5px; color: #94a3b8;">Tags do comando (separadas por vírgula):</label>
+                <input type="text" id="speedtest-flags" style="width: 100%; padding: 8px; background: #0f172a; color: var(--text-light); border: 1px solid #334155; border-radius: 6px;" placeholder="--secure, --server-id=XXXXX">
+                <small style="color: #64748b; display: block; margin-top: 5px;">Flags comuns: --secure (HTTPS), --server-id=XXXXX (servidor específico). Nota: --single não é suportado nesta versão do speedtest.</small>
+            </div>
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <h3 style="color: var(--accent-green); font-size: 1.1em;">📊 Opções de Teste</h3>
+            <div style="display: flex; gap: 20px; margin-top: 10px;">
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--text-light);">
+                    <input type="checkbox" id="skip-download" style="width: 18px; height: 18px; cursor: pointer;">
+                    <span>Desabilitar teste de Download (economiza dados)</span>
+                </label>
+            </div>
+            <div style="display: flex; gap: 20px; margin-top: 10px;">
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--text-light);">
+                    <input type="checkbox" id="skip-upload" style="width: 18px; height: 18px; cursor: pointer;">
+                    <span>Desabilitar teste de Upload (economiza dados)</span>
+                </label>
+            </div>
+            <small style="color: #64748b; display: block; margin-top: 10px;">⚠️ Atenção: Se ambos estiverem desabilitados, apenas ping e jitter serão medidos.</small>
+        </div>
+
+        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+            <button onclick="toggleConfigPanel()" style="background: #475569; padding: 10px 20px;">Cancelar</button>
+            <button onclick="saveConfig()" style="background: var(--accent-green); color: #000; padding: 10px 20px; font-weight: bold;">💾 Salvar Configurações</button>
+        </div>
+
+        <div id="config-message" style="margin-top: 15px; padding: 10px; border-radius: 6px; display: none;"></div>
     </div>
 
     <div class="main-content">
@@ -245,11 +323,34 @@
             <div class="chart-container">
                 <canvas id="chartPacketLoss"></canvas>
             </div>
+            <div class="chart-container">
+                <canvas id="chartDataUsage"></canvas>
+            </div>
         </div>
 
         <div class="stats-panel">
             <h2>📊 Estatísticas</h2>
             
+            <div class="stat-item">
+                <h3>Consumo de Dados</h3>
+                <div class="stat-values">
+                    <div class="stat-box">
+                        <div class="stat-label">Período Atual</div>
+                        <div class="stat-value" id="data-consumed-period" style="color: #a78bfa;">--</div>
+                    </div>
+                </div>
+                <div class="stat-values" style="margin-top: 10px;">
+                    <div class="stat-box">
+                        <div class="stat-label">Total Geral</div>
+                        <div class="stat-value" id="data-consumed-total" style="color: #a78bfa;">--</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Testes</div>
+                        <div class="stat-value" id="test-count" style="color: #94a3b8;">--</div>
+                    </div>
+                </div>
+            </div>
+
             <div class="stat-item">
                 <h3>Download</h3>
                 <div class="stat-values">
@@ -444,6 +545,43 @@
             }
         });
 
+        const chartDataUsage = new Chart(document.getElementById("chartDataUsage"), {
+            type: 'bar',
+            data: {
+                labels: [],
+                datasets: [
+                    { label: 'Consumo de Dados (MB)', data: [], borderColor: '#a78bfa', backgroundColor: 'rgba(167,139,250,0.5)', borderWidth: 1 }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { ticks: { color: '#cbd5e1' }, grid: { color: '#334155' } },
+                    y: { beginAtZero: true, ticks: { color: '#cbd5e1' }, grid: { color: '#334155' } }
+                },
+                plugins: {
+                    legend: { labels: { color: '#e2e8f0' } },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const mb = context.parsed.y;
+                                const gb = mb / 1024;
+                                if (gb >= 1) {
+                                    return 'Consumo: ' + gb.toFixed(2) + ' GB';
+                                }
+                                return 'Consumo: ' + mb.toFixed(2) + ' MB';
+                            },
+                            afterLabel: function(context) {
+                                const provider = providersData[context.dataIndex];
+                                return provider ? 'Provedor: ' + provider : '';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
         function updateStats(stats) {
             document.getElementById('download-min').textContent = stats.download.min.toFixed(2) + ' Mbps';
             document.getElementById('download-max').textContent = stats.download.max.toFixed(2) + ' Mbps';
@@ -484,8 +622,46 @@
             chartPacketLoss.data.datasets[0].data = data.packet_loss || [];
             chartPacketLoss.update();
 
+            chartDataUsage.data.labels = data.timestamps;
+            chartDataUsage.data.datasets[0].data = data.data_consumed || [];
+            chartDataUsage.update();
+
             if (data.stats) {
                 updateStats(data.stats);
+            }
+
+            // Atualizar consumo do período atual
+            if (data.total_data_consumed_mb !== undefined) {
+                const consumedMB = data.total_data_consumed_mb;
+                const consumedGB = consumedMB / 1024;
+                if (consumedGB >= 1) {
+                    document.getElementById('data-consumed-period').textContent = consumedGB.toFixed(2) + ' GB';
+                } else {
+                    document.getElementById('data-consumed-period').textContent = consumedMB.toFixed(2) + ' MB';
+                }
+            }
+
+            // Atualizar consumo total
+            updateTotalDataUsage();
+        }
+
+        async function updateTotalDataUsage() {
+            try {
+                const res = await fetch('/data-usage');
+                const usage = await res.json();
+                
+                const totalGB = usage.total_gb;
+                const totalMB = usage.total_mb;
+                
+                if (totalGB >= 1) {
+                    document.getElementById('data-consumed-total').textContent = totalGB.toFixed(2) + ' GB';
+                } else {
+                    document.getElementById('data-consumed-total').textContent = totalMB.toFixed(2) + ' MB';
+                }
+                
+                document.getElementById('test-count').textContent = usage.test_count;
+            } catch (error) {
+                console.error('Erro ao obter consumo total:', error);
             }
         }
 
@@ -515,8 +691,158 @@
         }
 
         setInterval(updateCharts, 10000);
+        setInterval(updateMonitorStatus, 5000);
         loadProviders();
         updateCharts();
+        loadConfig();
+        updateMonitorStatus();
+
+        // === Atualizar status do monitor ===
+        async function updateMonitorStatus() {
+            try {
+                const res = await fetch('/status');
+                const status = await res.json();
+                
+                const indicator = document.getElementById('status-indicator');
+                const statusText = document.getElementById('status-text');
+                const statusDetail = document.getElementById('status-detail');
+                
+                console.log('Status do monitor:', status); // Debug
+                
+                if (status.in_schedule) {
+                    indicator.style.background = '#4ade80';
+                    indicator.style.boxShadow = '0 0 8px #4ade80';
+                    statusText.textContent = '🟢 Monitorando';
+                    
+                    if (status.next_test_in_seconds !== null) {
+                        const mins = Math.floor(status.next_test_in_seconds / 60);
+                        const secs = status.next_test_in_seconds % 60;
+                        
+                        if (status.next_test_in_seconds === 0) {
+                            statusDetail.textContent = 'Executando teste agora...';
+                        } else if (mins > 0) {
+                            statusDetail.textContent = `Próximo teste em ${mins}min ${secs}s (intervalo: ${status.current_interval}s)`;
+                        } else {
+                            statusDetail.textContent = `Próximo teste em ${secs}s (intervalo: ${status.current_interval}s)`;
+                        }
+                    } else if (status.last_test) {
+                        statusDetail.textContent = `Último teste: ${status.last_test} | Aguardando primeiro teste no horário...`;
+                    } else {
+                        statusDetail.textContent = `Aguardando primeiro teste... (horário: ${status.monitor_start_hour}h-${status.monitor_end_hour}h)`;
+                    }
+                } else {
+                    indicator.style.background = '#fbbf24';
+                    indicator.style.boxShadow = '0 0 8px #fbbf24';
+                    statusText.textContent = '⏸️ Pausado';
+                    
+                    statusDetail.textContent = `Fora do horário (${status.current_hour}h). Monitoramento: ${status.monitor_start_hour}h-${status.monitor_end_hour}h`;
+                }
+            } catch (error) {
+                console.error('Erro ao obter status:', error);
+                document.getElementById('status-text').textContent = '❌ Erro de conexão';
+                document.getElementById('status-detail').textContent = 'Não foi possível conectar ao servidor';
+            }
+        }
+
+        // === Funções de Configuração ===
+        function toggleConfigPanel() {
+            const panel = document.getElementById('config-panel');
+            if (panel.style.display === 'none') {
+                panel.style.display = 'block';
+                loadConfig();
+            } else {
+                panel.style.display = 'none';
+            }
+        }
+
+        async function loadConfig() {
+            try {
+                const res = await fetch('/config');
+                const config = await res.json();
+                
+                document.getElementById('start-hour').value = config.monitor_start_hour;
+                document.getElementById('end-hour').value = config.monitor_end_hour;
+                document.getElementById('interval').value = config.measure_interval;
+                
+                // Remover flags fixas e mostrar apenas as customizáveis
+                const fixedFlags = ['--accept-license', '--accept-gdpr', '-f', 'json'];
+                const customFlags = config.speedtest_flags.filter(flag => !fixedFlags.includes(flag));
+                document.getElementById('speedtest-flags').value = customFlags.join(', ');
+                
+                // Carregar configurações de skip
+                document.getElementById('skip-download').checked = config.skip_download || false;
+                document.getElementById('skip-upload').checked = config.skip_upload || false;
+            } catch (error) {
+                console.error('Erro ao carregar configurações:', error);
+            }
+        }
+
+        async function saveConfig() {
+            const startHour = parseInt(document.getElementById('start-hour').value);
+            const endHour = parseInt(document.getElementById('end-hour').value);
+            const interval = parseInt(document.getElementById('interval').value);
+            const flagsInput = document.getElementById('speedtest-flags').value;
+            const skipDownload = document.getElementById('skip-download').checked;
+            const skipUpload = document.getElementById('skip-upload').checked;
+            
+            // Validações
+            if (startHour < 0 || startHour > 23 || endHour < 0 || endHour > 23) {
+                showMessage('Horas devem estar entre 0 e 23', 'error');
+                return;
+            }
+            
+            if (interval < 60) {
+                showMessage('Intervalo mínimo é 60 segundos', 'error');
+                return;
+            }
+
+            // Processar flags (sempre incluir as obrigatórias)
+            const fixedFlags = ['--accept-license', '--accept-gdpr', '-f', 'json'];
+            const customFlags = flagsInput.split(',').map(f => f.trim()).filter(f => f);
+            const allFlags = [...fixedFlags, ...customFlags];
+
+            const config = {
+                monitor_start_hour: startHour,
+                monitor_end_hour: endHour,
+                measure_interval: interval,
+                speedtest_flags: allFlags,
+                skip_download: skipDownload,
+                skip_upload: skipUpload
+            };
+
+            try {
+                const res = await fetch('/config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(config)
+                });
+
+                const result = await res.json();
+                
+                if (res.ok) {
+                    showMessage('✅ Configurações salvas e aplicadas com sucesso! O monitor já está usando as novas configurações.', 'success');
+                    // Atualizar status imediatamente
+                    setTimeout(updateMonitorStatus, 1000);
+                } else {
+                    showMessage('❌ Erro: ' + (result.error || 'Erro desconhecido'), 'error');
+                }
+            } catch (error) {
+                showMessage('❌ Erro ao salvar configurações: ' + error.message, 'error');
+            }
+        }
+
+        function showMessage(text, type) {
+            const msgDiv = document.getElementById('config-message');
+            msgDiv.textContent = text;
+            msgDiv.style.display = 'block';
+            msgDiv.style.background = type === 'success' ? '#064e3b' : '#7f1d1d';
+            msgDiv.style.color = type === 'success' ? '#4ade80' : '#f87171';
+            msgDiv.style.border = `1px solid ${type === 'success' ? '#4ade80' : '#f87171'}`;
+            
+            setTimeout(() => {
+                msgDiv.style.display = 'none';
+            }, 5000);
+        }
     </script>
 </body>
 </html>

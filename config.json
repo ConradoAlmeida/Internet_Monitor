@@ -1,0 +1,14 @@
+{
+  "measure_interval": 3600,
+  "monitor_start_hour": 6,
+  "monitor_end_hour": 19,
+  "speedtest_flags": [
+    "--accept-license",
+    "--accept-gdpr",
+    "-f",
+    "json",
+    "--single"
+  ],
+  "skip_download": false,
+  "skip_upload": false
+}
